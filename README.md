@@ -1,6 +1,6 @@
 # CodexIsland
 
-[English](README.md) | [简体中文](README.zh-CN.md)
+[English](README.md) | [한국어](README.ko.md) | [简体中文](README.zh-CN.md)
 
 <p align="center">
   <img src="Assets/codexisland-logo.png" width="160" alt="CodexIsland logo">
@@ -255,14 +255,15 @@ Smoke test the native app:
 test harnesses. `verify.sh` builds the app, launches the binary for one second,
 then kills it if it is still alive.
 
-### Build your own copy (no auto-update)
+### Build your own copy
 
-A stock `./build.sh` embeds the upstream Sparkle feed, so the app you built
-eventually replaces itself with an upstream release — taking your local changes
-with it. To keep a personal build, override the identity and drop the feed:
+This fork embeds **no update feed by default**, so a build made from these
+sources stays yours: it never replaces itself with an upstream release and
+never takes your changes with it. Name it whatever you like and it installs
+alongside an existing copy:
 
 ```sh
-APP_NAME=MyIsland SU_FEED_URL= ./build.sh
+APP_NAME=MyIsland ./build.sh
 cp -R build/MyIsland.app /Applications/
 ```
 
@@ -271,10 +272,7 @@ cp -R build/MyIsland.app /Applications/
 | `APP_NAME` | `CodexIsland` | Bundle and executable name, so the copy lives side by side with the original |
 | `DISPLAY_NAME` | `$APP_NAME` | Name shown in Finder and the menu bar |
 | `BUNDLE_ID` | `dev.codexisland.CodexIsland` | Keep it to inherit your existing settings and usage history; change it to start from a clean slate |
-| `SU_FEED_URL` | upstream appcast | Empty writes no Sparkle keys at all: the updater never starts and the Updates section disappears from Settings |
-
-An empty `SU_FEED_URL` is honoured literally, so auto-update is genuinely off
-rather than falling back to the default feed.
+| `SU_FEED_URL` | *(empty)* | Empty writes no Sparkle keys at all: the updater never starts and the Updates section disappears from Settings. Set it to your own appcast URL to ship signed updates |
 
 If the stock app came from Homebrew, remove it as well —
 `brew uninstall --cask codexisland` — otherwise `brew upgrade` reinstalls it

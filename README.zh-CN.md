@@ -1,6 +1,6 @@
 # CodexIsland
 
-[English](README.md) | [简体中文](README.zh-CN.md)
+[English](README.md) | [한국어](README.ko.md) | [简体中文](README.zh-CN.md)
 
 <p align="center">
   <img src="Assets/codexisland-logo.png" width="160" alt="CodexIsland logo">
@@ -126,6 +126,27 @@ open build/CodexIsland.app
 ```
 
 脚本会构建应用，启动二进制 1 秒，如果它仍在运行就结束进程。
+
+### 构建你自己的版本
+
+这个 fork **默认不嵌入任何更新源**，所以从这份源码构建出来的 app 始终属于你：
+它不会用上游发布版覆盖自己，也不会把你的修改一起带走。你可以随意命名，
+它会和已有的安装并存：
+
+```sh
+APP_NAME=MyIsland ./build.sh
+cp -R build/MyIsland.app /Applications/
+```
+
+| 变量 | 默认值 | 作用 |
+|---|---|---|
+| `APP_NAME` | `CodexIsland` | bundle 和可执行文件名，改名后可与原版并存 |
+| `DISPLAY_NAME` | `$APP_NAME` | 在 Finder 和菜单栏显示的名称 |
+| `BUNDLE_ID` | `dev.codexisland.CodexIsland` | 保持不变可继承现有设置和用量历史；改掉则从零开始 |
+| `SU_FEED_URL` | *(空)* | 为空时完全不写入 Sparkle 键：更新器不会启动，设置里的 Updates 区块也会消失。填入自己的 appcast 地址即可发布签名更新 |
+
+如果原版是用 Homebrew 安装的，请一并卸载 —— `brew uninstall --cask codexisland`
+—— 否则 `brew upgrade` 会把它重新装回来，覆盖你的构建。
 
 ## 发布
 

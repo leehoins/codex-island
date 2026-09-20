@@ -3,8 +3,8 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
-# Overridable so a personal, update-free copy can be built side by side with
-# the release bundle:  APP_NAME=MyIsland SU_FEED_URL= ./build.sh
+# Overridable so a personal copy can be built side by side with an existing
+# install:  APP_NAME=MyIsland ./build.sh
 # Defaults are the release identity / CI and the Homebrew cask depend on them.
 APP_NAME="${APP_NAME:-CodexIsland}"
 DISPLAY_NAME="${DISPLAY_NAME:-$APP_NAME}"
@@ -36,9 +36,12 @@ SPARKLE_FW="$SPARKLE_DIR/Sparkle.framework"
 # changing it strands them.
 SU_PUBLIC_KEY="bz1gwLBKgIL/Y7OO23o3gaMNIeTpvv/C90F9inr9Quo="
 
-# `${VAR-default}` (no colon) so an explicitly empty SU_FEED_URL= survives and
-# means "no auto-update"; `:-` would silently fall back to the release feed.
-SU_FEED_URL="${SU_FEED_URL-https://github.com/ericjypark/codex-island/releases/latest/download/appcast.xml}"
+# This fork embeds NO update feed by default. With the upstream feed baked in,
+# a build made from these sources eventually replaces itself with an upstream
+# release and takes every local change with it. Set the variable explicitly to
+# embed a feed (required for a signed release of your own):
+#   SU_FEED_URL=https://example.com/appcast.xml ./build.sh
+SU_FEED_URL="${SU_FEED_URL-}"
 
 # An empty SU_FEED_URL means "no auto-update at all". Emitting an empty
 # SUFeedURL string would leave Sparkle started but feedless, which fails at
