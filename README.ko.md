@@ -328,9 +328,6 @@ DMG를 기준으로 해당 필드를 다시 작성한다.
   이 데이터베이스에는 토큰 수, 모델, 타임스탬프, 불투명한 레코드 식별자가 들어 있으며,
   프롬프트나 응답, 자격 증명은 포함하지 않는다.
 
-이 README 상단의 방문자 배지는 배지 요청 수를 세는 외부 `hits.sh` 이미지다.
-네이티브 앱에 번들되지 않으며 앱이 이 이미지를 요청하지도 않는다.
-
 네트워크 관련 코드는
 [`Sources/Usage/UsageFetcher.swift`](Sources/Usage/UsageFetcher.swift)에 집중되어 있다.
 로컬 로그 리더는 [`Sources/Cost/`](Sources/Cost/)에 있다.

@@ -377,9 +377,6 @@ Native app behavior:
   The database contains token counts, models, timestamps, and opaque record
   identifiers; it does not contain prompts, responses, or credentials.
 
-The visitor badge at the top of this README is an external `hits.sh` image that
-counts badge requests. It is not bundled with or contacted by the native app.
-
 The network surface is concentrated in
 [`Sources/Usage/UsageFetcher.swift`](Sources/Usage/UsageFetcher.swift). The
 local log readers live in [`Sources/Cost/`](Sources/Cost/).
