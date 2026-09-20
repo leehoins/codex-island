@@ -8,13 +8,37 @@
 
 > 你的 AI 用量限额，住在 Mac 刘海里。
 
-CodexIsland 是一个原生 macOS 悬浮层，把 MacBook 刘海变成类似 Dynamic Island 的实时用量状态。它支持 Claude Code 和 Codex，用悬停预览 5 小时窗口，用点击展开完整面板，展示 5 小时与周窗口的用量、重置时间、图表样式，以及从本地会话日志估算的美元成本和 token 吞吐量。
+这是 [ericjypark/codex-island](https://github.com/ericjypark/codex-island) 的 fork。
+本 fork 的改动：
 
-应用免费、开源、未签名，并且以本地优先为原则。它读取 Claude Code / Claude Desktop 和 Codex 已经写入本机的凭据，只调用对应服务自己的用量接口。
+- **紧凑状态下就能看到四个服务。** 不用点击即可读到 Codex、Claude、Grok 和
+  Cursor。黑色轮廓严格保持物理刘海的宽度，用量绘制在刘海两侧的菜单栏像素上，
+  并朝摄像头开孔靠拢，因此岛遮住的区域不会超过硬件本身。悬停和点击的响应区域
+  也覆盖这两侧翼 —— 刘海本身没有像素可以瞄准。
+- **新增 Cursor 服务**，数据来自本地 OpenCodex 配额缓存。
+- **韩语本地化**（`Resources/ko.lproj`）。
+- **默认不带自动更新**，并且 `APP_NAME`、`DISPLAY_NAME`、`BUNDLE_ID` 都可覆盖，
+  所以你自己构建的版本不会被上游发布覆盖。参见
+  [构建你自己的版本](#构建你自己的版本)。
+
+<p align="center">
+  <img src="Assets/fork-notch-collapsed.png" width="620" alt="紧凑状态下刘海两侧显示 Codex、Claude、Grok 和 Cursor 的百分比">
+</p>
+
+<p align="center">
+  <img src="Assets/fork-panel-expanded.png" width="860" alt="展开面板中的 Codex、Claude、Grok 和 Cursor 四列">
+</p>
+
+紧凑状态的截图来自帧缓冲，所以刘海区域会拍成一块黑色。在真实屏幕上那块区域就是
+硬件刘海，只有两侧的数字是可见的。
+
+CodexIsland 是一个原生 macOS 悬浮层，把 MacBook 刘海变成类似 Dynamic Island 的实时用量状态。它用悬停预览 5 小时窗口，用点击展开完整面板，展示 5 小时与周窗口的用量、重置时间、图表样式，以及从本地会话日志估算的美元成本和 token 吞吐量。
+
+应用免费、开源、未签名，并且以本地优先为原则。它读取 Claude Code / Claude Desktop、Codex、Grok 和 OpenCodex 已经写入本机的凭据与配额缓存，只调用对应服务自己的用量接口。
 
 ## 功能
 
-- **两个服务，四个窗口。** 在一个面板里显示 Claude 5 小时 + 7 天，以及 Codex 5 小时 + 7 天。
+- **一个面板，四个服务。** Claude 5 小时 + 7 天、Codex 5 小时 + 7 天、Grok 和 Cursor，紧凑状态下也全部可读。
 - **贴合刘海的悬浮层。** 紧凑状态是一个对齐物理刘海的黑色胶囊；没有刘海的 Mac 会退回到菜单栏胶囊。
 - **悬停预览。** 鼠标移到刘海附近时，胶囊会展开到足够显示每个可见服务的 5 小时百分比和重置提示。
 - **点击展开。** 点击岛可打开完整 Usage / Cost / Overview 面板，包含服务列、图表控制和分页。
@@ -33,6 +57,9 @@ CodexIsland 是一个原生 macOS 悬浮层，把 MacBook 刘海变成类似 Dyn
 - **原生隐私边界。** 没有应用遥测、崩溃上报、第三方分析或代理服务。
 
 ## 安装
+
+下面的 Homebrew cask 和 DMG 发布安装的是**上游**应用，不是这个 fork。要用这个
+fork，请[从源码构建](#从源码构建)。
 
 ### Homebrew
 
@@ -111,7 +138,7 @@ Claude：
 需要 macOS 13+ 和来自 Xcode / Command Line Tools 的 Swift 工具链。
 
 ```sh
-git clone https://github.com/ericjypark/codex-island
+git clone https://github.com/leehoins/codex-island
 cd codex-island
 ./build.sh
 open build/CodexIsland.app

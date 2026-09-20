@@ -6,24 +6,40 @@
   <img src="Assets/codexisland-logo.png" width="160" alt="CodexIsland logo">
 </p>
 
-<p align="center">
-  <a href="https://hits.sh/github.com/ericjypark/codex-island/">
-    <img alt="README visitors" src="https://hits.sh/github.com/ericjypark/codex-island.svg?label=visitors&color=007ec6&labelColor=555555">
-  </a>
-</p>
-
 > AI 사용 한도를 노치 안에서 확인한다.
 
-CodexIsland는 맥북 노치를 Claude Code와 Codex 사용 한도를 위한 다이나믹 아일랜드 스타일 라이브 액티비티로 바꿔주는 네이티브 macOS 오버레이다. 노치 위에 조용히 자리 잡고, 마우스를 올리면 5시간 요약이 살짝 나타나며, 클릭하면 확장되어 두 제공자의 5시간 및 주간 윈도우와 초기화 시점, 차트 컨트롤, 로컬 로그 기반 비용 추정, 연간 사용 기록을 한눈에 보여준다.
+[ericjypark/codex-island](https://github.com/ericjypark/codex-island)의 포크다.
+이 포크에서 달라진 점:
 
-https://github.com/user-attachments/assets/195beeff-0f70-4d6b-8f3d-9f31d9c0b989
+- **접힌 상태에서 프로바이더 4개가 보인다.** 클릭하지 않아도 Codex, Claude, Grok,
+  Cursor를 읽을 수 있다. 검은 실루엣은 물리 노치 폭 그대로 유지하고, 사용량은 그
+  바로 옆 메뉴바 픽셀에 카메라 홀 쪽으로 붙여 그린다. 그래서 하드웨어가 이미
+  가리는 영역보다 메뉴바를 더 잠식하지 않는다. 호버와 클릭은 이 좌우 날개까지
+  받는다 — 노치 자체에는 조준할 픽셀이 없기 때문이다.
+- **Cursor 프로바이더 추가.** 로컬 OpenCodex 쿼타 캐시에서 읽는다.
+- **한국어 로컬라이제이션** (`Resources/ko.lproj`).
+- **기본값이 자동 업데이트 없음.** `APP_NAME`, `DISPLAY_NAME`, `BUNDLE_ID`를
+  덮어쓸 수 있어서, 직접 빌드한 앱이 업스트림 릴리스로 교체되지 않는다.
+  [나만의 복사본 빌드하기](#나만의-복사본-빌드하기) 참고.
 
+<p align="center">
+  <img src="Assets/fork-notch-collapsed.png" width="620" alt="접힌 상태에서 노치 옆에 표시되는 Codex, Claude, Grok, Cursor 사용률">
+</p>
 
-이 앱은 무료이며 오픈 소스이고, 서명되지 않았으며 로컬 우선으로 동작한다. Claude Code / Claude Desktop과 Codex가 이미 기록해 둔 자격 증명을 읽은 뒤, 각 제공자의 사용량 엔드포인트만 호출한다.
+<p align="center">
+  <img src="Assets/fork-panel-expanded.png" width="860" alt="Codex, Claude, Grok, Cursor 열이 있는 확장 패널">
+</p>
+
+접힌 상태 스크린샷은 프레임버퍼 캡처라서 노치 영역이 검은 블록으로 찍힌다. 실제
+화면에서 그 영역은 하드웨어 노치이고, 양옆 숫자만 눈에 보인다.
+
+CodexIsland는 맥북 노치를 AI 코딩 사용 한도를 위한 다이나믹 아일랜드 스타일 라이브 액티비티로 바꿔주는 네이티브 macOS 오버레이다. 노치 위에 조용히 자리 잡고, 마우스를 올리면 5시간 요약이 살짝 나타나며, 클릭하면 확장되어 각 제공자의 5시간 및 주간 윈도우와 초기화 시점, 차트 컨트롤, 로컬 로그 기반 비용 추정, 연간 사용 기록을 한눈에 보여준다.
+
+이 앱은 무료이며 오픈 소스이고, 서명되지 않았으며 로컬 우선으로 동작한다. Claude Code / Claude Desktop, Codex, Grok, OpenCodex가 이미 기록해 둔 자격 증명과 쿼타 캐시를 읽은 뒤, 각 제공자의 사용량 엔드포인트만 호출한다.
 ## 주요 기능
 
-- **두 개의 제공자, 네 개의 윈도우.** Claude 5h + 7d와 Codex 5h + 7d를 하나의
-  패널에서 확인한다.
+- **한 패널에 프로바이더 4개.** Claude 5h + 7d, Codex 5h + 7d, Grok, Cursor를
+  하나의 패널에서 확인하고, 접힌 노치에서도 모두 읽을 수 있다.
 - **노치 네이티브 오버레이.** 축소 상태는 물리적 노치에 정렬된 검은 알약 형태이며,
   하드웨어와 일치하는 연속 곡률(스쿼클) 모서리로 그려진다. 노치가 없는 디스플레이에서는
   설정 가능한 메뉴 막대 알약으로 대체된다.
@@ -92,6 +108,9 @@ https://github.com/user-attachments/assets/195beeff-0f70-4d6b-8f3d-9f31d9c0b989
 - **네이티브 앱 프라이버시.** 앱 텔레메트리, 크래시 리포팅, 서드파티 앱 분석, 프록시
   서비스가 전혀 없다.
 ## 설치
+
+아래 Homebrew cask와 DMG 릴리스는 **업스트림** 앱을 설치한다. 이 포크를 쓰려면
+[소스에서 빌드](#소스에서-빌드하기)해야 한다.
 
 ### Homebrew
 
@@ -191,7 +210,7 @@ Claude의 경우:
 macOS 13 이상과 Xcode / Command Line Tools의 Swift 툴체인이 필요하다.
 
 ```sh
-git clone https://github.com/ericjypark/codex-island
+git clone https://github.com/leehoins/codex-island
 cd codex-island
 ./build.sh
 open build/CodexIsland.app

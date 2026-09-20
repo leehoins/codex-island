@@ -6,32 +6,49 @@
   <img src="Assets/codexisland-logo.png" width="160" alt="CodexIsland logo">
 </p>
 
-<p align="center">
-  <a href="https://hits.sh/github.com/ericjypark/codex-island/">
-    <img alt="README visitors" src="https://hits.sh/github.com/ericjypark/codex-island.svg?label=visitors&color=007ec6&labelColor=555555">
-  </a>
-</p>
-
 > Your AI usage limits, living in your notch.
 
+A fork of [ericjypark/codex-island](https://github.com/ericjypark/codex-island).
+What this fork changes:
+
+- **Four providers readable while collapsed.** Codex, Claude, Grok and Cursor
+  without clicking anything. The black silhouette stays exactly the width of
+  the physical notch and the readout renders on the menu-bar pixels beside it,
+  packed toward the camera hole, so the island never covers more of the bar
+  than the hardware already does. Hover and click accept those wings too — the
+  notch itself has no pixels to aim at.
+- **Cursor as a provider,** read from the local OpenCodex quota cache.
+- **Korean localization** (`Resources/ko.lproj`).
+- **No auto-update by default,** with overridable `APP_NAME`, `DISPLAY_NAME`
+  and `BUNDLE_ID`, so a build you make stays the build you have. See
+  [Build your own copy](#build-your-own-copy).
+
+<p align="center">
+  <img src="Assets/fork-notch-collapsed.png" width="620" alt="Codex, Claude, Grok and Cursor percentages beside the notch while collapsed">
+</p>
+
+<p align="center">
+  <img src="Assets/fork-panel-expanded.png" width="860" alt="Expanded panel with Codex, Claude, Grok and Cursor columns">
+</p>
+
+The collapsed shot is a framebuffer capture, so the notch region reads as a
+black block. On the real display that region *is* the hardware notch — only the
+numbers on either side of it are visible.
+
 CodexIsland is a native macOS overlay that turns the MacBook notch into a
-Dynamic-Island-style live activity for Claude Code and Codex usage limits. It
-sits quietly over the notch, peeks on hover with the 5-hour headline, and
-expands on click to show both providers' 5-hour and weekly windows with reset
-timing, chart controls, local-log cost estimates, and a year-at-a-glance usage
-history.
-
-https://github.com/user-attachments/assets/195beeff-0f70-4d6b-8f3d-9f31d9c0b989
-
+Dynamic-Island-style live activity for AI coding usage limits. It sits quietly
+over the notch, peeks on hover with the 5-hour headline, and expands on click
+to show each provider's 5-hour and weekly windows with reset timing, chart
+controls, local-log cost estimates, and a year-at-a-glance usage history.
 
 The app is free, open source, unsigned, and local-first. It reads credentials
-already written by Claude Code / Claude Desktop and Codex, then calls only the
-providers' own usage endpoints.
+and quota caches already written by Claude Code / Claude Desktop, Codex, Grok
+and OpenCodex, then calls only the providers' own usage endpoints.
 
 ## What it does
 
-- **Two providers, four windows.** Claude 5h + 7d and Codex 5h + 7d live in
-  one panel.
+- **Four providers in one panel.** Claude 5h + 7d, Codex 5h + 7d, Grok and
+  Cursor, all readable from the collapsed notch.
 - **Notch-native overlay.** The compact state is a black pill aligned to the
   physical notch, drawn with continuous (squircle) corners that match the
   hardware. On non-notched displays it falls back to a configurable menu-bar
@@ -112,6 +129,9 @@ providers' own usage endpoints.
   app analytics, and no proxy service.
 
 ## Install
+
+The Homebrew cask and the DMG releases below install the **upstream** app, not
+this fork. To get the fork, [build it from source](#build-from-source).
 
 ### Homebrew
 
@@ -234,7 +254,7 @@ changing the app language offers to restart CodexIsland.
 Requires macOS 13+ and a Swift toolchain from Xcode / Command Line Tools.
 
 ```sh
-git clone https://github.com/ericjypark/codex-island
+git clone https://github.com/leehoins/codex-island
 cd codex-island
 ./build.sh
 open build/CodexIsland.app
