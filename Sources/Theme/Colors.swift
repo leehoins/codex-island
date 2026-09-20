@@ -13,6 +13,9 @@ enum IslandColor {
 
     static let grok = Color.white
 
+    // Cursor brand-ish cyan for the notch mark.
+    static let cursor = Color(red: 0/255, green: 180/255, blue: 216/255)
+
     // App identity tint: separates Antigravity from Codex blue and status colors.
     static let antigravity = Color(red: 182/255, green: 156/255, blue: 255/255)
 

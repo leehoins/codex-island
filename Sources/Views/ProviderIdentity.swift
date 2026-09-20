@@ -18,6 +18,7 @@ extension IslandProvider {
         case .claude: return IslandColor.claude
         case .codex: return IslandColor.codex
         case .grok: return IslandColor.grok
+        case .cursor: return IslandColor.cursor
         case .antigravity: return IslandColor.antigravity
         }
     }
@@ -28,10 +29,23 @@ extension IslandProvider {
         default: return nil
         }
     }
+
+    /// One-letter peek glyph when packing 3–4 providers into the notch.
+    var peekAbbrev: String {
+        switch self {
+        case .claude: return "A"
+        case .codex: return "O"
+        case .grok: return "G"
+        case .cursor: return "C"
+        case .antigravity: return "Y"
+        }
+    }
 }
 
 struct ProviderMark: View {
     let provider: IslandProvider
+    var size: CGFloat = 20
+
     private static let claude = Bundle.main.url(forResource: "claude_logo", withExtension: "pdf").flatMap { NSImage(contentsOf: $0) }
     private static let codex = Bundle.main.url(forResource: "openai_logo", withExtension: "pdf").flatMap { NSImage(contentsOf: $0) }
 
@@ -43,6 +57,7 @@ struct ProviderMark: View {
         case .claude: return Self.claude
         case .codex: return Self.codex
         case .grok: return Self.grok
+        case .cursor: return nil
         case .antigravity: return Self.antigravity
         }
     }
@@ -51,13 +66,16 @@ struct ProviderMark: View {
         Group {
             if let image {
                 Image(nsImage: image).resizable().renderingMode(.template).scaledToFit()
+            } else if provider == .cursor {
+                Image(systemName: "chevron.left.forwardslash.chevron.right")
+                    .resizable().scaledToFit()
             } else {
                 Image(systemName: provider == .grok ? "asterisk" : "a.circle")
                     .resizable().scaledToFit()
             }
         }
         .foregroundStyle(provider.color)
-        .frame(width: 20, height: 20)
+        .frame(width: size, height: size)
         .accessibilityLabel(provider.name)
     }
 }

@@ -14,6 +14,18 @@ struct PanelHeader: View {
     @ObservedObject private var connections = ProviderConnectionStore.shared
 
     var body: some View {
+        Group {
+            if visibility.selected.count <= 2 {
+                dualHeader
+            } else {
+                // Match the 4-column screenshot, but keep titles below the
+                // physical camera band so Claude/Grok aren't under the lens.
+                multiHeader
+            }
+        }
+    }
+
+    private var dualHeader: some View {
         HStack(spacing: 0) {
             title(visibility.left, isLeft: true)
             Color.clear.frame(width: notch.width)
@@ -25,6 +37,50 @@ struct PanelHeader: View {
         }
         .frame(height: IslandPanelLayout.headerHeight(notch: notch))
         .padding(.horizontal, IslandPanelLayout.horizontalInset)
+    }
+
+    private var multiHeader: some View {
+        // Titles sit in the band just below the physical camera. Keep the
+        // clear spacer exactly notch.height so openMorph doesn't grow an
+        // extra empty black slab that reads as the island "jumping up".
+        VStack(spacing: 0) {
+            Color.clear
+                .frame(height: notch.height)
+            HStack(spacing: 0) {
+                ForEach(Array(visibility.selected.enumerated()), id: \.element.id) { index, provider in
+                    if index > 0 {
+                        Color.clear.frame(width: 1)
+                    }
+                    columnTitle(provider)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+            .padding(.horizontal, IslandPanelLayout.horizontalInset)
+            .frame(height: 26)
+        }
+    }
+
+    private func columnTitle(_ provider: IslandProvider) -> some View {
+        let plan = provider == .claude ? usageStore.claude.plan
+            : provider == .codex ? usageStore.codex.plan : connections.snapshot(provider).plan
+        return HStack(spacing: 6) {
+            ProviderMark(provider: provider, size: 13)
+            Text(provider.name)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(.white)
+                .lineLimit(1)
+                .layoutPriority(1)
+            if let plan = provider.planDisplayName(plan) {
+                Text(plan.uppercased())
+                    .font(.system(size: 9, weight: .medium))
+                    .tracking(0.5)
+                    .foregroundStyle(.white.opacity(0.55))
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, IslandPanelLayout.columnInset)
     }
 
     private func title(_ provider: IslandProvider, isLeft: Bool) -> some View {

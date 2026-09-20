@@ -30,7 +30,7 @@ final class CostStore: ObservableObject {
         switch provider {
         case .claude: return claude
         case .codex: return codex
-        case .grok, .antigravity:
+        case .grok, .cursor, .antigravity:
             return connectedCosts[provider] ?? ProviderCost(
                 today: .unavailable(label: "Today", reason: "Local usage has not been loaded"),
                 month: .unavailable(label: CostBucketing.currentMonthLabel(), reason: "Local usage has not been loaded"))
@@ -41,7 +41,7 @@ final class CostStore: ObservableObject {
         switch provider {
         case .claude: return claudeLoading
         case .codex: return codexLoading
-        case .grok, .antigravity: return connectedLoading.contains(provider)
+        case .grok, .cursor, .antigravity: return connectedLoading.contains(provider)
         }
     }
 
@@ -385,6 +385,7 @@ extension IslandProvider {
         case .claude: return .claude
         case .codex: return .codex
         case .grok: return .grok
+        case .cursor: return .cursor
         case .antigravity: return .antigravity
         }
     }

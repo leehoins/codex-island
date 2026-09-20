@@ -174,10 +174,10 @@ struct CostTile: View {
             if subscriptionUSD == nil {
                 VStack(spacing: 3) {
                     Text("—").font(Typography.bodyNumber)
-                    Text("Plan").font(Typography.caption)
+                    Text(L10n.tr("Plan")).font(Typography.caption)
                 }
                 .foregroundStyle(.white.opacity(0.4))
-                .help("Monthly USD reference price is not available for this plan.")
+                .help(L10n.tr("Monthly USD reference price is not available for this plan."))
             } else {
             barColumn(
                 amount: plan,
@@ -299,6 +299,7 @@ struct CostTile: View {
             case .codex:  return usageStore.codex.plan?.lowercased()
             case .antigravity: return connections.snapshot(.antigravity).plan?.lowercased()
             case .grok: return connections.snapshot(.grok).plan?.lowercased()
+            case .cursor: return connections.snapshot(.cursor).plan?.lowercased()
             }
         }()
         guard let plan else { return nil }
@@ -327,6 +328,7 @@ struct CostTile: View {
             case .codex:  return usageStore.codex.plan?.lowercased()
             case .antigravity: return connections.snapshot(.antigravity).plan?.lowercased()
             case .grok: return connections.snapshot(.grok).plan?.lowercased()
+            case .cursor: return connections.snapshot(.cursor).plan?.lowercased()
             }
         }()
         guard let plan else { return nil }

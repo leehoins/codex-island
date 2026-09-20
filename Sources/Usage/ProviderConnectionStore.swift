@@ -31,9 +31,17 @@ final class ProviderConnectionStore: ObservableObject {
     }
 
     func snapshot(_ provider: IslandProvider) -> ConnectedUsage {
-        snapshots[provider] ?? ConnectedUsage(message: provider == .grok
-            ? "Sign in with Grok CLI to connect your subscription."
-            : "Sign in with agy CLI to connect your subscription.", needsLogin: true)
+        if let existing = snapshots[provider] { return existing }
+        let message: String
+        switch provider {
+        case .grok:
+            message = "Sign in with Grok CLI to connect your subscription."
+        case .cursor:
+            message = "Open OpenCodex (localhost:10100) and sign in to Cursor, then refresh."
+        default:
+            message = "Sign in with agy CLI to connect your subscription."
+        }
+        return ConnectedUsage(message: message, needsLogin: true)
     }
 
     func limits(_ provider: IslandProvider) -> [ConnectedLimit] {
@@ -59,12 +67,13 @@ final class ProviderConnectionStore: ObservableObject {
         if let until = cooldown[provider], until > Date() { return }
         if !manually, let previous = lastAttempt[provider], Date().timeIntervalSince(previous) < 300 { return }
         if AppEnvironment.isDemo {
+            let label = provider == .grok ? "Credits" : provider == .cursor ? "month" : "5h"
             snapshots[provider] = ConnectedUsage(limits: [
-                ConnectedLimit(id: "demo", label: provider == .grok ? "Credits" : "5h",
+                ConnectedLimit(id: "demo", label: label,
                     usedFraction: 0.38, resetAt: Date().addingTimeInterval(7200),
-                    groupLabel: provider == .grok ? nil : "Gemini Models",
-                    kind: provider == .grok ? .credits : .session)
-            ], plan: provider == .grok ? "SuperGrok" : "AI Pro", updatedAt: Date())
+                    groupLabel: provider == .grok ? nil : provider == .cursor ? "Cursor" : "Gemini Models",
+                    kind: provider == .grok ? .credits : provider == .cursor ? .other : .session)
+            ], plan: provider == .grok ? "SuperGrok" : provider == .cursor ? "OpenCodex" : "AI Pro", updatedAt: Date())
             if provider == .antigravity {
                 snapshots[provider]?.limits.append(ConnectedLimit(id: "weekly", label: "week",
                     usedFraction: 0.62, resetAt: Date().addingTimeInterval(86400),
@@ -88,10 +97,24 @@ final class ProviderConnectionStore: ObservableObject {
                 }
             }
             do {
-                let fetched = try await ProviderSessionRecovery.fetch {
-                    try await (provider == .grok ? GrokConnection.fetch() : AntigravityConnection.fetch())
-                } renew: {
-                    try await ProviderSessionRecovery.renew(provider == .grok ? "grok" : "agy")
+                let fetched: ConnectedUsage
+                switch provider {
+                case .grok:
+                    fetched = try await ProviderSessionRecovery.fetch {
+                        try await GrokConnection.fetch()
+                    } renew: {
+                        try await ProviderSessionRecovery.renew("grok")
+                    }
+                case .cursor:
+                    fetched = try await CursorConnection.fetch()
+                case .antigravity:
+                    fetched = try await ProviderSessionRecovery.fetch {
+                        try await AntigravityConnection.fetch()
+                    } renew: {
+                        try await ProviderSessionRecovery.renew("agy")
+                    }
+                default:
+                    throw ProviderConnectionError.unavailable
                 }
                 guard !Task.isCancelled else { return }
                 snapshots[provider] = fetched
@@ -109,14 +132,20 @@ final class ProviderConnectionStore: ObservableObject {
                 case ProviderConnectionError.signIn, ProviderConnectionError.expired,
                      ProviderConnectionError.http(401):
                     needsLogin = true
-                    message = provider == .grok ? "Run grok login, then refresh the connection."
-                        : "Open agy CLI to restore your session, then refresh the connection."
+                    switch provider {
+                    case .grok: message = "Run grok login, then refresh the connection."
+                    case .cursor: message = "Sign in to Cursor in OpenCodex (#providers), then refresh."
+                    default: message = "Open agy CLI to restore your session, then refresh the connection."
+                    }
                 case ProviderConnectionError.http(429):
                     cooldown[provider] = Date().addingTimeInterval(900)
                     message = "Rate limited. Retrying in 15 minutes."
                 default:
-                    message = provider == .grok ? "Could not read Grok usage. Try refreshing the connection."
-                        : "Could not read Antigravity usage. Check your agy CLI login, then refresh."
+                    switch provider {
+                    case .grok: message = "Could not read Grok usage. Try refreshing the connection."
+                    case .cursor: message = "Could not read Cursor usage from OpenCodex. Open localhost:10100 and refresh."
+                    default: message = "Could not read Antigravity usage. Check your agy CLI login, then refresh."
+                    }
                 }
                 snapshots[provider] = ConnectedUsage(message: message, needsLogin: needsLogin)
             }
@@ -124,7 +153,17 @@ final class ProviderConnectionStore: ObservableObject {
     }
 
     func connect(_ provider: IslandProvider) {
-        guard provider == .grok || provider == .antigravity else { return }
+        switch provider {
+        case .cursor:
+            if let url = URL(string: "http://localhost:10100/#providers") {
+                NSWorkspace.shared.open(url)
+            }
+            return
+        case .grok, .antigravity:
+            break
+        default:
+            return
+        }
         let command = provider == .grok ? "grok" : "agy"
         guard let binary = ProviderSessionRecovery.binary(command) else {
             let installURL = provider == .grok ? "https://grok.com/build" : "https://antigravity.google/docs/cli/install/"

@@ -125,7 +125,7 @@ final class AlertEngine: ObservableObject {
                 // alert on 5h (peekWindow prefers it).
                 window: usage.codex.peekWindow
             ),
-        ] + [IslandProvider.grok, .antigravity].map { provider in
+        ] + [IslandProvider.grok, .cursor, .antigravity].map { provider in
             AlertDecision.WindowInput(provider: provider, visible: visibility.selected.contains(provider),
                 window: ProviderConnectionStore.shared.primary(provider)?.window ?? .unknown)
         }

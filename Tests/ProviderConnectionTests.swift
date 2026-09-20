@@ -52,7 +52,7 @@ struct ProviderConnectionTests {
             for right in IslandProvider.allCases {
                 store.set(left, at: 0)
                 store.set(right, at: 1)
-                expect((1...2).contains(store.selected.count) && Set(store.selected).count == store.selected.count,
+                expect((1...ProviderVisibilityStore.maxProviders).contains(store.selected.count) && Set(store.selected).count == store.selected.count,
                        "valid selection for \(left) / \(right)")
             }
         }
@@ -65,9 +65,9 @@ struct ProviderConnectionTests {
         defaults.set(false, forKey: "MacIsland.codexVisible")
         store = ProviderVisibilityStore(defaults: defaults)
         expect(store.selected == [.claude], "migrates both hidden to one provider")
-        defaults.set(["unknown", "grok", "grok", "antigravity", "codex"], forKey: ProviderVisibilityStore.selectionKey)
+        defaults.set(["unknown", "grok", "grok", "antigravity", "codex", "claude", "cursor"], forKey: ProviderVisibilityStore.selectionKey)
         store = ProviderVisibilityStore(defaults: defaults)
-        expect(store.selected == [.grok, .antigravity], "repairs invalid, duplicate, and over-capacity preferences")
+        expect(store.selected == [.grok, .antigravity, .codex, .claude], "repairs invalid, duplicate, and over-capacity preferences")
 
         let now = Date(timeIntervalSince1970: 1_780_000_000)
         let credential = try GrokConnection.credential(from: data(#"{"https://accounts.x.ai/sign-in":{"key":"legacy"},"https://auth.x.ai::test":{"key":"oidc","expires_at":"2099-01-01T00:00:00Z"}}"#), now: now)

@@ -3,8 +3,12 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
-APP_NAME="CodexIsland"
-BUNDLE_ID="dev.codexisland.CodexIsland"
+# Overridable so a personal, update-free copy can be built side by side with
+# the release bundle:  APP_NAME=MyIsland SU_FEED_URL= ./build.sh
+# Defaults are the release identity / CI and the Homebrew cask depend on them.
+APP_NAME="${APP_NAME:-CodexIsland}"
+DISPLAY_NAME="${DISPLAY_NAME:-$APP_NAME}"
+BUNDLE_ID="${BUNDLE_ID:-dev.codexisland.CodexIsland}"
 VERSION="$(cat VERSION)"
 if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
   echo "error: VERSION must be X.Y.Z (got '$VERSION')" >&2
@@ -32,7 +36,23 @@ SPARKLE_FW="$SPARKLE_DIR/Sparkle.framework"
 # changing it strands them.
 SU_PUBLIC_KEY="bz1gwLBKgIL/Y7OO23o3gaMNIeTpvv/C90F9inr9Quo="
 
-SU_FEED_URL="${SU_FEED_URL:-https://github.com/ericjypark/codex-island/releases/latest/download/appcast.xml}"
+# `${VAR-default}` (no colon) so an explicitly empty SU_FEED_URL= survives and
+# means "no auto-update"; `:-` would silently fall back to the release feed.
+SU_FEED_URL="${SU_FEED_URL-https://github.com/ericjypark/codex-island/releases/latest/download/appcast.xml}"
+
+# An empty SU_FEED_URL means "no auto-update at all". Emitting an empty
+# SUFeedURL string would leave Sparkle started but feedless, which fails at
+# launch, so omit the Sparkle keys entirely and pin the checks off instead.
+if [ -n "$SU_FEED_URL" ]; then
+  SPARKLE_KEYS="  <key>SUFeedURL</key><string>$SU_FEED_URL</string>
+  <key>SUPublicEDKey</key><string>$SU_PUBLIC_KEY</string>
+  <key>SUEnableAutomaticChecks</key><true/>"
+  echo "auto-update: enabled ($SU_FEED_URL)"
+else
+  SPARKLE_KEYS="  <key>SUEnableAutomaticChecks</key><false/>
+  <key>SUAutomaticallyUpdate</key><false/>"
+  echo "auto-update: DISABLED (no feed embedded)"
+fi
 
 rm -rf "$BUILD_DIR"
 mkdir -p "$MACOS_DIR" "$RES_DIR" "$FRAMEWORKS_DIR"
@@ -84,7 +104,7 @@ cat > "$CONTENTS/Info.plist" <<EOF
 <plist version="1.0">
 <dict>
   <key>CFBundleName</key><string>$APP_NAME</string>
-  <key>CFBundleDisplayName</key><string>CodexIsland</string>
+  <key>CFBundleDisplayName</key><string>$DISPLAY_NAME</string>
   <key>CFBundleIdentifier</key><string>$BUNDLE_ID</string>
   <key>CFBundleVersion</key><string>$VERSION</string>
   <key>CFBundleShortVersionString</key><string>$VERSION</string>
@@ -96,9 +116,7 @@ cat > "$CONTENTS/Info.plist" <<EOF
   <key>NSHighResolutionCapable</key><true/>
   <key>NSPrincipalClass</key><string>NSApplication</string>
   <key>NSHumanReadableCopyright</key><string>Copyright © 2026 Eric Park. MIT licensed.</string>
-  <key>SUFeedURL</key><string>$SU_FEED_URL</string>
-  <key>SUPublicEDKey</key><string>$SU_PUBLIC_KEY</string>
-  <key>SUEnableAutomaticChecks</key><true/>
+$SPARKLE_KEYS
 </dict>
 </plist>
 EOF

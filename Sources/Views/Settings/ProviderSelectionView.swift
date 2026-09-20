@@ -10,25 +10,71 @@ struct ProviderSelectionView: View {
         VStack(alignment: .leading, spacing: 18) {
             VStack(alignment: .leading, spacing: 6) {
                 Text(L10n.tr("On your island")).font(.system(size: 15, weight: .semibold))
-                Text(L10n.tr("Choose up to two providers."))
+                Text(L10n.tr("Choose up to four providers."))
                     .font(.system(size: 12)).foregroundStyle(.white.opacity(0.68))
                     .fixedSize(horizontal: false, vertical: true)
             }
-            HStack(alignment: .bottom, spacing: 10) {
-                slot(0, provider: selection.left)
-                Button {
-                    withAnimation(reduceMotion ? nil : .openMorph) { selection.swap() }
-                } label: {
-                    Image(systemName: "arrow.left.arrow.right")
-                        .frame(width: 32, height: 44)
+
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 8)], spacing: 8) {
+                ForEach(IslandProvider.allCases) { provider in
+                    let on = selection.selected.contains(provider)
+                    Button {
+                        withAnimation(reduceMotion ? nil : .openMorph) {
+                            selection.toggle(provider)
+                        }
+                    } label: {
+                        HStack(spacing: 8) {
+                            ProviderMark(provider: provider, size: 16)
+                            Text(provider.name)
+                                .font(.system(size: 12, weight: .medium))
+                                .lineLimit(1)
+                            Spacer(minLength: 0)
+                            Image(systemName: on ? "checkmark.circle.fill" : "circle")
+                                .foregroundStyle(on ? provider.color : .white.opacity(0.35))
+                        }
+                        .padding(10)
+                        .background(.white.opacity(on ? 0.10 : 0.05), in: RoundedRectangle(cornerRadius: 8))
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(!on && selection.selected.count >= ProviderVisibilityStore.maxProviders)
+                    .opacity(!on && selection.selected.count >= ProviderVisibilityStore.maxProviders ? 0.4 : 1)
+                    .accessibilityLabel(provider.name)
+                    .accessibilityValue(on ? L10n.tr("On") : L10n.tr("Off"))
                 }
-                .buttonStyle(.plain)
-                .disabled(selection.right == nil)
-                .opacity(selection.right == nil ? 0.3 : 1)
-                .help(L10n.tr("Swap left and right"))
-                .accessibilityLabel(L10n.tr("Swap left and right"))
-                slot(1, provider: selection.right)
             }
+
+            if selection.selected.count >= 2 {
+                HStack(spacing: 8) {
+                    Text(L10n.tr("Order on island"))
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(.white.opacity(0.65))
+                    Spacer()
+                    Button {
+                        withAnimation(reduceMotion ? nil : .openMorph) { selection.swap() }
+                    } label: {
+                        Image(systemName: "arrow.left.arrow.right")
+                            .frame(width: 28, height: 28)
+                    }
+                    .buttonStyle(.plain)
+                    .help(L10n.tr("Swap left and right"))
+                }
+                HStack(spacing: 6) {
+                    ForEach(Array(selection.selected.enumerated()), id: \.element.id) { index, provider in
+                        HStack(spacing: 4) {
+                            Text("\(index + 1)")
+                                .font(.system(size: 10, weight: .bold, design: .rounded))
+                                .foregroundStyle(.white.opacity(0.45))
+                            ProviderMark(provider: provider, size: 14)
+                            Text(provider.name)
+                                .font(.system(size: 11, weight: .medium))
+                                .lineLimit(1)
+                        }
+                        .padding(.horizontal, 8).padding(.vertical, 6)
+                        .background(.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 6))
+                    }
+                }
+            }
+
             Divider().overlay(.white.opacity(0.08))
             ForEach(selection.selected) { provider in
                 connectionRow(provider)
@@ -36,44 +82,6 @@ struct ProviderSelectionView: View {
         }
         .padding(24)
         .task { connections.refreshSelected() }
-    }
-
-    private func slot(_ index: Int, provider: IslandProvider?) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(L10n.tr(index == 0 ? "Left" : "Right"))
-                .font(.system(size: 11, weight: .medium)).foregroundStyle(.white.opacity(0.65))
-            HStack(spacing: 8) {
-                if let provider { ProviderMark(provider: provider) }
-                else { Image(systemName: "plus").frame(width: 20, height: 20) }
-                Menu {
-                    ForEach(IslandProvider.allCases) { candidate in
-                        Button {
-                            withAnimation(reduceMotion ? nil : .openMorph) { selection.set(candidate, at: index) }
-                        } label: {
-                            if candidate == provider { Label(candidate.name, systemImage: "checkmark") }
-                            else { Text(candidate.name) }
-                        }
-                        .disabled(index == 1 && selection.right == nil && candidate == selection.left)
-                    }
-                    if index == 1 {
-                        Divider()
-                        Button(L10n.tr("None — use one provider")) {
-                            withAnimation(reduceMotion ? nil : .openMorph) { selection.set(nil, at: 1) }
-                        }
-                    }
-                } label: {
-                    Text(provider?.name ?? L10n.tr("Add provider"))
-                        .font(.system(size: 13, weight: .medium)).lineLimit(1)
-                }
-                .menuStyle(.borderlessButton)
-                .accessibilityLabel(L10n.tr(index == 0 ? "Left provider" : "Right provider"))
-                .accessibilityValue(provider?.name ?? L10n.tr("None"))
-            }
-            .padding(10)
-            .frame(maxWidth: .infinity, minHeight: 44)
-            .background(.white.opacity(0.065), in: RoundedRectangle(cornerRadius: 8))
-        }
-        .frame(maxWidth: .infinity)
     }
 
     @ViewBuilder
@@ -143,6 +151,14 @@ struct ProviderConnectionSection: View {
 
     private var signedIn: Bool { !snapshot.needsLogin && snapshot.updatedAt != nil }
 
+    private var connectTitle: String {
+        switch provider {
+        case .grok: return L10n.tr("Sign in with Grok CLI")
+        case .cursor: return L10n.tr("Open OpenCodex providers")
+        default: return L10n.tr("Open agy CLI")
+        }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 4) {
@@ -161,7 +177,7 @@ struct ProviderConnectionSection: View {
                 }
                 if signedIn {
                     Menu {
-                        Button(L10n.tr(provider == .grok ? "Sign in again…" : "Open agy CLI"), action: connect)
+                        Button(connectTitle, action: connect)
                     } label: {
                         Image(systemName: "ellipsis").frame(width: 20, height: 28)
                     }
@@ -186,7 +202,7 @@ struct ProviderConnectionSection: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     if snapshot.needsLogin {
-                        Button(L10n.tr(provider == .grok ? "Sign in with Grok CLI" : "Open agy CLI"), action: connect)
+                        Button(connectTitle, action: connect)
                             .controlSize(.small)
                     }
                 }

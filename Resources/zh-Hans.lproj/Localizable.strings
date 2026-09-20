@@ -364,3 +364,12 @@
 "The usage archive changed. Scan again before saving." = "用量存档已更改。请重新扫描后再保存。";
 "A selected recovery source is no longer available. Choose it again, then scan." = "所选恢复来源已不可用。请重新选择后再扫描。";
 "Saved token counts exceed the supported range. Check the recovery files before trying again." = "保存的 token 数量超出了支持范围。请检查恢复文件后重试。";
+"Choose up to four providers." = "最多选择四个提供方。";
+"On" = "开";
+"Off" = "关";
+"Order on island" = "岛上顺序";
+"Open OpenCodex providers" = "打开 OpenCodex 提供方";
+"Open OpenCodex (localhost:10100) and sign in to Cursor, then refresh." = "打开 OpenCodex (localhost:10100) 登录 Cursor，然后刷新。";
+"Sign in to Cursor in OpenCodex (#providers), then refresh." = "在 OpenCodex (#providers) 登录 Cursor，然后刷新。";
+"Could not read Cursor usage from OpenCodex. Open localhost:10100 and refresh." = "无法从 OpenCodex 读取 Cursor 用量。打开 localhost:10100 后刷新。";
+"Cursor" = "Cursor";

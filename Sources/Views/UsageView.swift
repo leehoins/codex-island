@@ -12,17 +12,28 @@ struct UsageView: View {
     private var style: ChartStyle { pref.style }
 
     var body: some View {
-        HStack(spacing: 0) {
-            providerBlock(visibility.left)
-            hairline
-            if let right = visibility.right {
-                providerBlock(right)
-            } else if let legacy = visibility.left.legacy {
-                PerModelBreakdown(provider: legacy, metric: .tokens)
-                    .frame(maxWidth: .infinity, alignment: .top)
-                    .padding(.horizontal, IslandPanelLayout.columnInset)
+        Group {
+            if visibility.selected.count <= 2 {
+                HStack(spacing: 0) {
+                    providerBlock(visibility.left)
+                    hairline
+                    if let right = visibility.right {
+                        providerBlock(right)
+                    } else if let legacy = visibility.left.legacy {
+                        PerModelBreakdown(provider: legacy, metric: .tokens)
+                            .frame(maxWidth: .infinity, alignment: .top)
+                            .padding(.horizontal, IslandPanelLayout.columnInset)
+                    } else {
+                        Color.clear.frame(maxWidth: .infinity)
+                    }
+                }
             } else {
-                Color.clear.frame(maxWidth: .infinity)
+                HStack(spacing: 0) {
+                    ForEach(Array(visibility.selected.enumerated()), id: \.element.id) { index, provider in
+                        if index > 0 { hairline }
+                        providerBlock(provider)
+                    }
+                }
             }
         }
         .frame(height: IslandPanelLayout.tileHeight)
@@ -50,7 +61,6 @@ struct UsageView: View {
             .padding(.vertical, 8)
     }
 }
-
 struct ChartsBlock: View {
     let color: Color
     let usage: AppUsage

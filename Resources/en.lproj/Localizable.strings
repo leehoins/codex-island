@@ -364,3 +364,12 @@
 "The usage archive changed. Scan again before saving." = "The usage archive changed. Scan again before saving.";
 "A selected recovery source is no longer available. Choose it again, then scan." = "A selected recovery source is no longer available. Choose it again, then scan.";
 "Saved token counts exceed the supported range. Check the recovery files before trying again." = "Saved token counts exceed the supported range. Check the recovery files before trying again.";
+"Choose up to four providers." = "Choose up to four providers.";
+"On" = "On";
+"Off" = "Off";
+"Order on island" = "Order on island";
+"Open OpenCodex providers" = "Open OpenCodex providers";
+"Open OpenCodex (localhost:10100) and sign in to Cursor, then refresh." = "Open OpenCodex (localhost:10100) and sign in to Cursor, then refresh.";
+"Sign in to Cursor in OpenCodex (#providers), then refresh." = "Sign in to Cursor in OpenCodex (#providers), then refresh.";
+"Could not read Cursor usage from OpenCodex. Open localhost:10100 and refresh." = "Could not read Cursor usage from OpenCodex. Open localhost:10100 and refresh.";
+"Cursor" = "Cursor";

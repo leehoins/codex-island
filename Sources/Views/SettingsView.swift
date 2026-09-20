@@ -456,27 +456,31 @@ struct SettingsView: View {
         }
     }
 
+    @ViewBuilder
     private var updatesSection: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            sectionLabel("Updates")
-            SettingsRow(
-                title: "Check for updates automatically",
-                subtitle: "Check for new versions in the background and notify you when one's available."
-            ) {
-                SettingsToggle(isOn: updater.automaticallyChecks) {
-                    updater.automaticallyChecks.toggle()
+        // Personal builds embed no Sparkle feed, so there is nothing to offer.
+        if UpdaterController.updatesEnabled {
+            VStack(alignment: .leading, spacing: 0) {
+                sectionLabel("Updates")
+                SettingsRow(
+                    title: "Check for updates automatically",
+                    subtitle: "Check for new versions in the background and notify you when one's available."
+                ) {
+                    SettingsToggle(isOn: updater.automaticallyChecks) {
+                        updater.automaticallyChecks.toggle()
+                    }
+                }
+                SettingsRow(
+                    title: "Check now",
+                    subtitle: "Look for a new version immediately."
+                ) {
+                    PillButton(label: "Check") { updater.checkForUpdates() }
                 }
             }
-            SettingsRow(
-                title: "Check now",
-                subtitle: "Look for a new version immediately."
-            ) {
-                PillButton(label: "Check") { updater.checkForUpdates() }
-            }
+            .padding(.horizontal, 14)
+            .padding(.top, 14)
+            .padding(.bottom, 6)
         }
-        .padding(.horizontal, 14)
-        .padding(.top, 14)
-        .padding(.bottom, 6)
     }
 
     private var languagePicker: some View {

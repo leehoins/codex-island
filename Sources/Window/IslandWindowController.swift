@@ -19,7 +19,7 @@ final class IslandWindowController {
     private var isMouseInsideIsland = false
     private var cmdQMonitor: Any?
 
-    static let windowSize = CGSize(width: 900, height: 360)
+    static let windowSize = CGSize(width: 1000, height: 420)
 
     init() {
         let notch = NotchInfo.detect(from: Self.targetScreen())
@@ -120,7 +120,7 @@ final class IslandWindowController {
         let win = window.frame
         let local = NSPoint(x: cursor.x - win.minX, y: cursor.y - win.minY)
 
-        let size = model.size
+        let size = model.interactiveSize
         let rect = NSRect(
             x: win.width / 2 - size.width / 2,
             y: win.height - size.height,

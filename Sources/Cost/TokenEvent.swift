@@ -8,6 +8,7 @@ struct TokenEvent {
         case claude
         case codex
         case grok
+        case cursor
         case antigravity
     }
 

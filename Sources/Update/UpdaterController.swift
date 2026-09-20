@@ -13,6 +13,14 @@ import SwiftUI
 final class UpdaterController: ObservableObject {
     static let shared = UpdaterController()
 
+    /// False in personal builds made with `SU_FEED_URL= ./build.sh`, which
+    /// embed no Sparkle feed. Starting the updater without a feed fails at
+    /// launch, so the updater is left unstarted and the UI hides itself.
+    static let updatesEnabled: Bool = {
+        let feed = Bundle.main.object(forInfoDictionaryKey: "SUFeedURL") as? String
+        return !(feed ?? "").isEmpty
+    }()
+
     private let controller: SPUStandardUpdaterController
 
     @Published var automaticallyChecks: Bool {
@@ -21,14 +29,15 @@ final class UpdaterController: ObservableObject {
 
     private init() {
         controller = SPUStandardUpdaterController(
-            startingUpdater: true,
+            startingUpdater: Self.updatesEnabled,
             updaterDelegate: nil,
             userDriverDelegate: nil
         )
-        automaticallyChecks = controller.updater.automaticallyChecksForUpdates
+        automaticallyChecks = Self.updatesEnabled && controller.updater.automaticallyChecksForUpdates
     }
 
     func checkForUpdates() {
+        guard Self.updatesEnabled else { return }
         controller.checkForUpdates(nil)
     }
 }

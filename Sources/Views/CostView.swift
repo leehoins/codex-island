@@ -10,15 +10,26 @@ struct CostView: View {
     @ObservedObject private var stylePref = CostStylePref.shared
 
     var body: some View {
-        HStack(spacing: 0) {
-            providerBlock(visibility.left)
-            hairline
-            if let right = visibility.right {
-                providerBlock(right)
+        Group {
+            if visibility.selected.count <= 2 {
+                HStack(spacing: 0) {
+                    providerBlock(visibility.left)
+                    hairline
+                    if let right = visibility.right {
+                        providerBlock(right)
+                    } else {
+                        breakdown(for: visibility.left)
+                            .frame(maxWidth: .infinity, alignment: .top)
+                            .padding(.horizontal, IslandPanelLayout.columnInset)
+                    }
+                }
             } else {
-                breakdown(for: visibility.left)
-                    .frame(maxWidth: .infinity, alignment: .top)
-                    .padding(.horizontal, IslandPanelLayout.columnInset)
+                HStack(spacing: 0) {
+                    ForEach(Array(visibility.selected.enumerated()), id: \.element.id) { index, provider in
+                        if index > 0 { hairline }
+                        providerBlock(provider)
+                    }
+                }
             }
         }
         .frame(height: IslandPanelLayout.tileHeight)

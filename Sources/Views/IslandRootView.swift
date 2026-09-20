@@ -12,6 +12,12 @@ struct IslandRootView: View {
 
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
 
+    /// Per-side hit-area growth beyond the silhouette. Non-zero only when the
+    /// 3–4 provider readout lives outside the shape.
+    private var hitInset: CGFloat {
+        model.state != .expanded && visibility.selected.count > 2 ? model.multiTabWidth : 0
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             // Only the rotating loading sweep needs per-frame re-renders
@@ -21,15 +27,10 @@ struct IslandRootView: View {
             // and every gesture closure 120 times per second — competing
             // with the spring for main-thread budget and showing up as
             // hover-spring jank.
-            ZStack {
+            ZStack(alignment: .top) {
                 if model.state == .expanded {
                     ExpandedView(model: model)
                         .opacity(contentVisible ? 1 : 0)
-                        // Slide down from -8 → 0 on enter pairs with the
-                        // 100ms→180ms opacity delay set in onHover. On
-                        // exit the offset never matters because the
-                        // content fully fades before the shape shrinks.
-                        .offset(y: contentVisible ? 0 : -8)
                         .allowsHitTesting(contentVisible)
                         .background {
                             GeometryReader { geometry in
@@ -40,7 +41,10 @@ struct IslandRootView: View {
                     Color.clear.frame(height: model.notch.height)
                 }
             }
-            .frame(width: model.size.width)
+            // Pin height to model.size so idle chrome cannot grow the
+            // silhouette downward (MultiProviderPeekStrip must not contribute
+            // to layout — it lives in .overlay below).
+            .frame(width: model.size.width, height: model.size.height, alignment: .top)
             .onPreferenceChange(ExpandedHeightKey.self) { model.updateExpandedHeight($0) }
             .background {
                 GlowLayer(isExpanded: model.state == .expanded, hovering: hovering)
@@ -75,32 +79,53 @@ struct IslandRootView: View {
                     }
                 }
                 .overlay(alignment: .topLeading) {
-                    if model.state != .expanded {
+                    if model.state != .expanded, visibility.selected.count <= 2 {
                         ProviderMark(provider: visibility.left)
                             .padding(.leading, logoEdgePadding)
                             .padding(.top, max(0, (model.notch.height - 20) / 2))
                     }
                 }
                 .overlay(alignment: .topTrailing) {
-                    if model.state != .expanded, let right = visibility.right {
+                    if model.state != .expanded, visibility.selected.count <= 2, let right = visibility.right {
                         ProviderMark(provider: right)
                             .padding(.trailing, logoEdgePadding)
                             .padding(.top, max(0, (model.notch.height - 20) / 2))
                     }
                 }
+                .overlay(alignment: .top) {
+                    if model.state != .expanded, visibility.selected.count > 2 {
+                        MultiProviderPeekStrip(
+                            providers: visibility.selected,
+                            notchWidth: model.notch.width,
+                            tabWidth: model.multiTabWidth,
+                            showPercents: true,
+                            topPadding: max(1, (model.notch.height - 26) / 2)
+                        )
+                    }
+                }
                 .overlay(alignment: .topLeading) {
-                    if model.state != .compact {
+                    if model.state != .compact, visibility.selected.count <= 2 {
                         PeekPillOverlay(provider: visibility.left, isLeft: true,
                             topPadding: max(0, (model.notch.height - 14) / 2), pillsVisible: pillsVisible)
                     }
                 }
                 .overlay(alignment: .topTrailing) {
-                    if model.state != .compact, let right = visibility.right {
+                    if model.state != .compact, visibility.selected.count <= 2, let right = visibility.right {
                         PeekPillOverlay(provider: right, isLeft: false,
                             topPadding: max(0, (model.notch.height - 14) / 2), pillsVisible: pillsVisible)
                     }
                 }
-                .contentShape(IslandShape())
+                // With 3–4 providers the silhouette shrinks to the bare bezel
+                // notch — no pixels, nothing to aim at — and the readout renders
+                // outside it, so the interactive frame widens over those wings.
+                // A negative padding + restoring padding pair does NOT work:
+                // the restoring padding becomes a narrower ancestor and SwiftUI
+                // refuses to descend into it for hits outside that box, so the
+                // click fell through to the desktop.
+                .frame(width: model.size.width + hitInset * 2,
+                       height: model.size.height,
+                       alignment: .center)
+                .contentShape(IslandHitShape(expanded: hitInset > 0))
                 .onTapGesture {
                     // Cmd-click cycles the visualization style of whichever
                     // page is active. Usage rotates Ring/Bar/Stepped/Numeric/
@@ -123,6 +148,10 @@ struct IslandRootView: View {
                     withAnimation(.openMorph) {
                         model.setState(.expanded)
                     }
+                    // Make sure the expanded content fade-in runs even if a
+                    // prior hover-out left contentVisible stuck false.
+                    contentVisible = false
+                    pillsVisible = true
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
                         guard model.state == .expanded else { return }
                         withAnimation(.strongEaseOut) {
@@ -309,7 +338,10 @@ struct IslandRootView: View {
     }
 
     private var restState: IslandModel.State {
-        alwaysShow.enabled ? .peek : .compact
+        // 3–4 providers already fill both notch wings. Idle-widening to
+        // `.peek` would grow black chrome over the camera / menu bar.
+        if visibility.selected.count > 2 { return .compact }
+        return alwaysShow.enabled ? .peek : .compact
     }
 
     private var accessibilityHintForState: String {
@@ -378,9 +410,9 @@ private struct GlowLayer: View {
                 // ambient 0.35 the way it always has.
                 .shadow(
                     color: glowColor.opacity(
-                        lowPower.effectiveEnabled ? (glowEventActive ? 0.35 : 0) : 0.35
+                        lowPower.effectiveEnabled ? (glowEventActive ? 0.22 : 0) : 0.18
                     ),
-                    radius: 14, y: 0
+                    radius: 8, y: 0
                 )
                 .animation(.easeInOut(duration: 0.25), value: glowEventActive)
                 // 0.45s cross-fade so a threshold crossing (e.g. 79%→80%)
@@ -472,7 +504,7 @@ private struct PeekPillOverlay: View {
         switch provider {
         case .claude: return usageStore.claude.fiveHour
         case .codex:  return usageStore.codex.peekWindow
-        case .grok, .antigravity:
+        case .grok, .cursor, .antigravity:
             return connections.primary(provider)?.window ?? .unknown
         }
     }
@@ -517,6 +549,100 @@ private struct PeekPillOverlay: View {
         case (.remaining, false): return L10n.tr("%@: %d percent of 5-hour window remaining, %@", provider, pct, resetPhrase)
         case (.used, true):       return L10n.tr("%@: %d percent of weekly window used, %@", provider, pct, resetPhrase)
         case (.remaining, true):  return L10n.tr("%@: %d percent of weekly window remaining, %@", provider, pct, resetPhrase)
+        }
+    }
+}
+
+/// 3–4 providers on real pixels beside the hardware notch.
+///
+/// The silhouette stays at the bare notch in this mode (`sideTabWidth == 0`),
+/// so these wings render OUTSIDE it, straight onto the menu bar. Content packs
+/// toward the camera hole — the first visible pixels next to the notch — so the
+/// readout reads as one cluster instead of two far-flung blobs. A shadow keeps
+/// it legible when the menu bar is light.
+private struct MultiProviderPeekStrip: View {
+    let providers: [IslandProvider]
+    let notchWidth: CGFloat
+    let tabWidth: CGFloat
+    let showPercents: Bool
+    let topPadding: CGFloat
+
+    @ObservedObject private var connections = ProviderConnectionStore.shared
+    @ObservedObject private var usageStore = UsageStore.shared
+    @ObservedObject private var usageDisplay = UsageDisplayModeStore.shared
+    @ObservedObject private var alerts = AlertEngine.shared
+
+    private var leftProviders: [IslandProvider] {
+        Array(providers.prefix((providers.count + 1) / 2))
+    }
+    private var rightProviders: [IslandProvider] {
+        Array(providers.suffix(providers.count / 2))
+    }
+
+    var body: some View {
+        HStack(spacing: 0) {
+            // Left wing: pack toward the trailing edge — hug the notch.
+            wing(leftProviders, hugsNotchOnRight: true)
+                .frame(width: tabWidth, alignment: .trailing)
+            Color.clear.frame(width: notchWidth)
+            // Right wing: pack toward the leading edge — hug the notch.
+            wing(rightProviders, hugsNotchOnRight: false)
+                .frame(width: tabWidth, alignment: .leading)
+        }
+        .frame(width: notchWidth + tabWidth * 2)
+        .padding(.top, topPadding)
+        .allowsHitTesting(false)
+    }
+
+    private func wing(_ items: [IslandProvider], hugsNotchOnRight: Bool) -> some View {
+        VStack(alignment: hugsNotchOnRight ? .trailing : .leading, spacing: 2) {
+            ForEach(items) { provider in
+                cell(provider)
+            }
+        }
+        // Small breathing gap against the notch edge.
+        .padding(hugsNotchOnRight ? .trailing : .leading, 5)
+    }
+
+    private func cell(_ provider: IslandProvider) -> some View {
+        let window = window(for: provider)
+        let pct = window.hasReading
+            ? "\(window.displayedPercentInt(mode: usageDisplay.mode))%"
+            : "—%"
+        let severity = alerts.providerSeverities[provider] ?? .none
+        let tint: Color = {
+            switch severity {
+            case .none: return provider.color
+            case .warning: return IslandColor.alertAmber
+            case .critical: return IslandColor.alertRed
+            }
+        }()
+        // Logo always leads, percent trails — identical on both wings so the
+        // four rows line up as one readout rather than a mirrored pair.
+        return HStack(spacing: 2) {
+            ProviderMark(provider: provider, size: 11)
+            if showPercents {
+                Text(pct)
+                    .font(.system(size: 9, weight: .bold, design: .monospaced))
+                    .foregroundStyle(.white.opacity(window.hasReading ? 0.95 : 0.5))
+                    .monospacedDigit()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+            }
+        }
+        .foregroundStyle(tint)
+        .frame(height: 12)
+        // Drawn on bare menu-bar pixels, not on the black silhouette.
+        .shadow(color: .black.opacity(0.7), radius: 1.5, x: 0, y: 0)
+        .accessibilityLabel(showPercents ? "\(provider.name) \(pct)" : provider.name)
+    }
+
+    private func window(for provider: IslandProvider) -> WindowUsage {
+        switch provider {
+        case .claude: return usageStore.claude.fiveHour
+        case .codex: return usageStore.codex.peekWindow
+        case .grok, .cursor, .antigravity:
+            return connections.primary(provider)?.window ?? .unknown
         }
     }
 }
@@ -568,6 +694,17 @@ private struct LoadingSweep: View {
                     .blur(radius: 3)
             }
         }
+    }
+}
+
+/// Click/hover region for the island. Normally the silhouette itself; in 3–4
+/// provider mode the shape is only the bezel notch, so the hit region becomes
+/// the full notch+wings rectangle the negative padding opened up.
+private struct IslandHitShape: Shape {
+    let expanded: Bool
+
+    func path(in rect: CGRect) -> Path {
+        expanded ? Path(rect) : IslandShape().path(in: rect)
     }
 }
 

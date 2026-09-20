@@ -38,7 +38,7 @@ struct WeeklyUsageCard: View {
 
             providerLegend
             if metric == .apiValue {
-                Text("API-rate estimate, not a bill.")
+                Text(L10n.tr("API-rate estimate, not a bill."))
                     .font(.system(size: 10, weight: .medium))
                     .foregroundStyle(theme.secondary)
                     .padding(.top, compact ? 8 : 12)
