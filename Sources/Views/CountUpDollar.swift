@@ -77,7 +77,12 @@ struct CountUpDollar: View {
         Text(text)
             .font(Typography.bigNumber)
             .lineLimit(1)
-            .minimumScaleFactor(0.5)
+            // Four selected providers halve every cost tile, and whole-unit
+            // currencies (KRW, JPY) run 7+ digits where USD runs 4. A 0.5
+            // floor bottomed out and truncated to "1,08" plus an ellipsis, so let the hero
+            // to shrink further instead of losing digits.
+            .minimumScaleFactor(0.32)
+            .allowsTightening(true)
             .foregroundStyle(color)
             .shadow(color: color.opacity(glowOpacity), radius: 6)
             .shadow(color: color.opacity(glowOpacity * 0.5), radius: 14)

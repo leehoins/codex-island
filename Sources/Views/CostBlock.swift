@@ -65,6 +65,11 @@ struct CostTile: View {
                 Spacer()
                 Text(resetGlyph)
                     .font(Typography.caption)
+                    // "No records" is far wider than the usual "5h" glyph and
+                    // wrapped to two lines once four providers halved the tile.
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+                    .allowsTightening(true)
                     .foregroundStyle(.white.opacity(window.unknownModels.isEmpty ? 0.4 : 0.5))
                     .help(resetGlyphSpoken)
                     .accessibilityLabel(resetGlyphSpoken)
@@ -230,6 +235,8 @@ struct CostTile: View {
                 .font(Typography.bodyNumber)
                 .foregroundStyle(isYou ? color : .white.opacity(0.78))
                 .lineLimit(1)
+                .minimumScaleFactor(0.55)
+                .allowsTightening(true)
             ZStack(alignment: .bottom) {
                 Color.clear.frame(width: 24, height: maxBarHeight)
                 RoundedRectangle(cornerRadius: 3)
@@ -252,6 +259,9 @@ struct CostTile: View {
         HStack(alignment: .firstTextBaseline, spacing: 3) {
             Text(tokensValue)
                 .font(Typography.bigNumber)
+                .lineLimit(1)
+                .minimumScaleFactor(0.32)
+                .allowsTightening(true)
                 .foregroundStyle(color)
                 .shadow(color: color.opacity(glowOpacity), radius: 6)
                 .shadow(color: color.opacity(glowOpacity * 0.5), radius: 14)
@@ -275,6 +285,9 @@ struct CostTile: View {
                     .foregroundStyle(.white.opacity(0.5))
                 Text(formattedDollarsCompact)
                     .font(Typography.bodyNumber)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.55)
+                    .allowsTightening(true)
                     .foregroundStyle(color)
                     .shadow(color: color.opacity(0.7), radius: 3)
             }
